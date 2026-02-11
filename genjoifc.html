@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 | Connection Fractured</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        #canvas { position: absolute; top: 0; left: 0; }
+        .ui {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            color: #444;
+            pointer-events: none;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+    <div class="ui">Error 500 // Integrity: Compromised // Drag to Distort</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let points = [];
+        const mouse = { x: -1000, y: -1000, radius: 150 };
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            points = [];
+            
+            // Create "500" shape using points
+            // Simplified grid to represent the numbers
+            drawText('500');
+        }
+
+        function drawText(text) {
+            ctx.font = 'bold 200px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 60);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Sample pixels to create particles
+            for (let y = 0; y < canvas.height; y += 8) {
+                for (let x = 0; x < canvas.width; x += 8) {
+                    const index = (y * canvas.width + x) * 4;
+                    if (imageData.data[index + 3] > 128) {
+                        points.push({
+                            x: x, y: y,
+                            originX: x, originY: y,
+                            vx: 0, vy: 0
+                        });
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 0.5;
+
+            for (let i = 0; i < points.size; i++) { /* Loop logic below */ }
+            
+            points.forEach((p, i) => {
+                const dx = mouse.x - p.x;
+                const dy = mouse.y - p.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                // Interaction logic
+                if (dist < mouse.radius) {
+                    const angle = Math.atan2(dy, dx);
+                    const force = (mouse.radius - dist) / mouse.radius;
+                    p.vx -= Math.cos(angle) * force * 5;
+                    p.vy -= Math.sin(angle) * force * 5;
+                }
+
+                // Spring back to origin
+                p.vx += (p.originX - p.x) * 0.05;
+                p.vy += (p.originY - p.y) * 0.05;
+
+                // Friction
+                p.vx *= 0.9;
+                p.vy *= 0.9;
+
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Draw Point
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`;
+                ctx.fillRect(p.x, p.y, 1.5, 1.5);
+
+                // Draw Lines between nearby points
+                for (let j = i + 1; j < points.length; j += 40) { // Limit for performance
+                    const p2 = points[j];
+                    const dx2 = p.x - p2.x;
+                    const dy2 = p.y - p2.y;
+                    const dist2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+                    if (dist2 < 40) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+        window.addEventListener('resize', init);
+    </script>
+</body>
+</html>

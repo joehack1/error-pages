@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 | Web-Link Severed</title>
+    <style>
+        body { margin: 0; background: #050505; overflow: hidden; cursor: crosshair; }
+        #canvas { position: absolute; top: 0; left: 0; filter: drop-shadow(0 0 5px #fff); }
+        
+        .ui-spidey {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            color: #b11313; /* Spidey Red */
+            font-family: 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            pointer-events: none;
+            font-size: 14px;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* Subtle web pattern overlay */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 100%; height: 100%;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+    <div class="ui-spidey">500: WEB_STABILITY_OFFLINE // SENSES TINGLING</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mouse = { x: -1000, y: -1000, radius: 120 };
+
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particles = [];
+            
+            // Generate the "500" from pixels
+            ctx.font = 'bold 240px sans-serif';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText('500', canvas.width / 2, canvas.height / 2 + 80);
+            
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let y = 0; y < canvas.height; y += 7) {
+                for (let x = 0; x < canvas.width; x += 7) {
+                    const alpha = data[((y * canvas.width + x) * 4) + 3];
+                    if (alpha > 128) {
+                        particles.push({
+                            x: x, y: y,
+                            baseX: x, baseY: y,
+                            vx: 0, vy: 0,
+                            friction: 0.9,
+                            ease: 0.12
+                        });
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach((p, i) => {
+                let dx = mouse.x - p.x;
+                let dy = mouse.y - p.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < mouse.radius) {
+                    // "Web Pull" Physics
+                    let force = (mouse.radius - distance) / mouse.radius;
+                    let angle = Math.atan2(dy, dx);
+                    // Pushes them away slightly then snaps them back toward mouse
+                    p.vx += Math.cos(angle) * force * 8;
+                    p.vy += Math.sin(angle) * force * 8;
+                }
+
+                // Return to original 500 shape (Tension)
+                p.vx += (p.baseX - p.x) * p.ease;
+                p.vy += (p.baseY - p.y) * p.ease;
+
+                p.vx *= p.friction;
+                p.vy *= p.friction;
+
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Draw Silk Silk Fibers
+                ctx.fillStyle = i % 5 === 0 ? '#b11313' : '#ffffff'; // Spidey Color Mix
+                ctx.fillRect(p.x, p.y, 2, 2);
+
+                // Draw the "Webbing" lines
+                if (distance < mouse.radius) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(mouse.x, mouse.y);
+                    ctx.stroke();
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
+        window.addEventListener('resize', init);
+    </script>
+</body>
+</html>
