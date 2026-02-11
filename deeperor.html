@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Segoe UI', monospace;
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            transition: transform 0.1s;
+        }
+
+        .glitch-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .error-code {
+            font-size: 12rem;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 2px #fff;
+            position: relative;
+            letter-spacing: 10px;
+            margin-bottom: 2rem;
+            text-shadow: 
+                0 0 10px rgba(255,255,255,0.3),
+                0 0 20px rgba(255,255,255,0.2),
+                0 0 30px rgba(255,255,255,0.1);
+        }
+
+        .error-code::before,
+        .error-code::after {
+            content: '500';
+            position: absolute;
+            top: 0;
+            left: 0;
+            color: #fff;
+            opacity: 0.2;
+        }
+
+        .error-code::before {
+            animation: glitch-1 2.5s infinite;
+        }
+
+        .error-code::after {
+            animation: glitch-2 3s infinite;
+        }
+
+        .error-message {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            padding: 0 20px;
+            color: #888;
+        }
+
+        .error-details {
+            font-size: 1rem;
+            color: #666;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        .interactive-grid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .grid-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .grid-line.horizontal {
+            width: 100%;
+            height: 1px;
+            left: 0;
+        }
+
+        .grid-line.vertical {
+            height: 100%;
+            width: 1px;
+            top: 0;
+        }
+
+        .cursor-trail {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, border-color 0.2s;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            z-index: 10;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .status-pulse {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, transparent 30%, rgba(255, 0, 0, 0.1) 70%);
+            animation: pulse 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes glitch-1 {
+            0%, 100% { transform: translate(0); }
+            10% { transform: translate(-2px, 2px); }
+            20% { transform: translate(2px, -2px); }
+            30% { transform: translate(-2px, -2px); }
+            40% { transform: translate(2px, 2px); }
+            50% { transform: translate(-2px, 2px); }
+            60% { transform: translate(2px, -2px); }
+            70% { transform: translate(-2px, -2px); }
+            80% { transform: translate(2px, 2px); }
+            90% { transform: translate(-2px, 2px); }
+        }
+
+        @keyframes glitch-2 {
+            0%, 100% { transform: translate(0); }
+            5% { transform: translate(2px, -2px); }
+            15% { transform: translate(-2px, 2px); }
+            25% { transform: translate(2px, 2px); }
+            35% { transform: translate(-2px, -2px); }
+            45% { transform: translate(2px, -2px); }
+            55% { transform: translate(-2px, 2px); }
+            65% { transform: translate(2px, 2px); }
+            75% { transform: translate(-2px, -2px); }
+            85% { transform: translate(2px, -2px); }
+            95% { transform: translate(-2px, 2px); }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.4;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 0.8;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 8rem;
+            }
+            
+            .error-message {
+                font-size: 1.4rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glitch-container">
+        <div class="interactive-grid" id="grid"></div>
+        
+        <div class="error-code">500</div>
+        <div class="error-message">INTERNAL SERVER ERROR</div>
+        <div class="error-details">
+            The server encountered an internal error and cannot complete your request.<br>
+            This is usually temporary. Please try again later.
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn" onclick="window.location.reload()">REFRESH</button>
+            <button class="btn" onclick="window.location.href='/'">GO HOME</button>
+            <button class="btn" onclick="showSupport()">GET HELP</button>
+        </div>
+        
+        <div id="status-pulse"></div>
+    </div>
+
+    <script>
+        // Create cursor trail
+        const cursorTrail = document.createElement('div');
+        cursorTrail.className = 'cursor-trail';
+        document.body.appendChild(cursorTrail);
+
+        // Create particles
+        const particles = [];
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = `${Math.random() * 100}vw`;
+            particle.style.top = `${Math.random() * 100}vh`;
+            particle.style.background = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+            particle.style.width = `${Math.random() * 4 + 2}px`;
+            particle.style.height = particle.style.width;
+            document.body.appendChild(particle);
+            particles.push({
+                element: particle,
+                x: parseFloat(particle.style.left),
+                y: parseFloat(particle.style.top),
+                speed: Math.random() * 0.5 + 0.2,
+                angle: Math.random() * Math.PI * 2
+            });
+        }
+
+        // Create grid lines
+        const grid = document.getElementById('grid');
+        const gridSize = 50;
+
+        for (let i = 0; i < window.innerWidth / gridSize; i++) {
+            const verticalLine = document.createElement('div');
+            verticalLine.className = 'grid-line vertical';
+            verticalLine.style.left = `${i * gridSize}px`;
+            grid.appendChild(verticalLine);
+        }
+
+        for (let i = 0; i < window.innerHeight / gridSize; i++) {
+            const horizontalLine = document.createElement('div');
+            horizontalLine.className = 'grid-line horizontal';
+            horizontalLine.style.top = `${i * gridSize}px`;
+            grid.appendChild(horizontalLine);
+        }
+
+        // Mouse move handler
+        let mouseX = 0;
+        let mouseY = 0;
+        let trailX = 0;
+        let trailY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Update cursor trail with smooth movement
+            trailX += (mouseX - trailX) * 0.1;
+            trailY += (mouseY - trailY) * 0.1;
+            
+            cursorTrail.style.left = `${trailX}px`;
+            cursorTrail.style.top = `${trailY}px`;
+            
+            // Resize trail based on speed
+            const speed = Math.sqrt(e.movementX ** 2 + e.movementY ** 2);
+            const size = Math.min(40, Math.max(20, speed));
+            cursorTrail.style.width = `${size}px`;
+            cursorTrail.style.height = `${size}px`;
+            cursorTrail.style.borderColor = `rgba(255, 255, 255, ${Math.min(0.8, size / 50)})`;
+
+            // Create status pulse at cursor position
+            if (Math.random() > 0.7) {
+                createStatusPulse(mouseX, mouseY);
+            }
+        });
+
+        // Animate particles
+        function animateParticles() {
+            particles.forEach(particle => {
+                particle.angle += particle.speed * 0.01;
+                particle.x += Math.cos(particle.angle) * 0.3;
+                particle.y += Math.sin(particle.angle) * 0.3;
+                
+                // Wrap around edges
+                if (particle.x > window.innerWidth) particle.x = 0;
+                if (particle.x < 0) particle.x = window.innerWidth;
+                if (particle.y > window.innerHeight) particle.y = 0;
+                if (particle.y < 0) particle.y = window.innerHeight;
+                
+                // Attract to cursor
+                const dx = mouseX - particle.x;
+                const dy = mouseY - particle.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 200) {
+                    particle.x += dx * 0.02;
+                    particle.y += dy * 0.02;
+                }
+                
+                particle.element.style.left = `${particle.x}px`;
+                particle.element.style.top = `${particle.y}px`;
+                
+                // Brightness based on cursor distance
+                const brightness = Math.max(0.2, 0.7 - distance / 400);
+                particle.element.style.opacity = brightness;
+            });
+            
+            requestAnimationFrame(animateParticles);
+        }
+
+        // Create status pulse effect
+        function createStatusPulse(x, y) {
+            const pulse = document.createElement('div');
+            pulse.className = 'status-pulse';
+            pulse.style.left = `${x - 50}px`;
+            pulse.style.top = `${y - 50}px`;
+            document.body.appendChild(pulse);
+            
+            setTimeout(() => {
+                pulse.remove();
+            }, 2000);
+        }
+
+        // Button click effects
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                // Create ripple effect
+                const ripple = document.createElement('div');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                
+                ripple.style.width = ripple.style.height = `${size}px`;
+                ripple.style.left = `${e.clientX - rect.left - size/2}px`;
+                ripple.style.top = `${e.clientY - rect.top - size/2}px`;
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                ripple.style.transform = 'scale(0)';
+                ripple.style.animation = 'ripple 0.6s linear';
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // Show support message
+        function showSupport() {
+            const message = "Contact support@example.com or try again in a few minutes.";
+            alert(message);
+        }
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Start animations
+        animateParticles();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < window.innerWidth / gridSize; i++) {
+                const verticalLine = document.createElement('div');
+                verticalLine.className = 'grid-line vertical';
+                verticalLine.style.left = `${i * gridSize}px`;
+                grid.appendChild(verticalLine);
+            }
+
+            for (let i = 0; i < window.innerHeight / gridSize; i++) {
+                const horizontalLine = document.createElement('div');
+                horizontalLine.className = 'grid-line horizontal';
+                horizontalLine.style.top = `${i * gridSize}px`;
+                grid.appendChild(horizontalLine);
+            }
+        });
+    </script>
+</body>
+</html>

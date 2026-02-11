@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Spotlight Reveal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  position: relative;
+}
+
+/* Hidden content (background layer) */
+.content {
+  height: 100vh;
+  background: linear-gradient(135deg, #111, #222);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 80px;
+  letter-spacing: 10px;
+}
+
+/* Black overlay with spotlight cutout */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: black;
+  pointer-events: none;
+  mask-image: radial-gradient(
+    circle 150px at var(--x, 50%) var(--y, 50%),
+    transparent 0%,
+    transparent 40%,
+    black 70%
+  );
+  -webkit-mask-image: radial-gradient(
+    circle 150px at var(--x, 50%) var(--y, 50%),
+    transparent 0%,
+    transparent 40%,
+    black 70%
+  );
+}
+</style>
+</head>
+
+<body>
+
+<div class="content">
+  500 ERROR
+</div>
+
+<div class="overlay"></div>
+
+<script>
+document.addEventListener("mousemove", function(e) {
+  document.body.style.setProperty('--x', e.clientX + 'px');
+  document.body.style.setProperty('--y', e.clientY + 'px');
+});
+</script>
+
+</body>
+</html>
