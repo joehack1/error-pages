@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>500 - System Failure</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  font-family: Arial, sans-serif;
+  cursor: none;
+  position: relative;
+}
+
+/* Centered number */
+.content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 120px;
+  letter-spacing: 15px;
+  color: white;
+  text-align: center;
+}
+
+/* Glitch layers */
+.glitch {
+  position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+  content: "500";
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+
+.glitch::before {
+  color: red;
+  transform: translate(-2px, 0);
+}
+
+.glitch::after {
+  color: cyan;
+  transform: translate(2px, 0);
+}
+
+/* Active glitch state */
+.glitch.active {
+  animation: shake 0.15s infinite;
+}
+
+.glitch.active::before,
+.glitch.active::after {
+  opacity: 0.7;
+}
+
+@keyframes shake {
+  0% { transform: translate(0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-2px, -1px); }
+  100% { transform: translate(2px, 1px); }
+}
+
+/* Spotlight overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: black;
+
+  -webkit-mask-image: radial-gradient(
+    circle 180px at var(--x, 50%) var(--y, 50%),
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,0) 40%,
+    rgba(0,0,0,0.4) 60%,
+    rgba(0,0,0,0.9) 75%,
+    black 100%
+  );
+
+  mask-image: radial-gradient(
+    circle 180px at var(--x, 50%) var(--y, 50%),
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,0) 40%,
+    rgba(0,0,0,0.4) 60%,
+    rgba(0,0,0,0.9) 75%,
+    black 100%
+  );
+
+  animation: flicker 3s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 1; }
+  48% { opacity: 0.95; }
+  50% { opacity: 0.85; }
+  52% { opacity: 0.95; }
+  100% { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="content">
+  <div class="glitch" id="errorText">500</div>
+</div>
+
+<div class="overlay"></div>
+
+<script>
+const text = document.getElementById("errorText");
+
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+
+document.addEventListener("mousemove", e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+function animate() {
+  const wobbleX = Math.sin(Date.now() / 300) * 5;
+  const wobbleY = Math.cos(Date.now() / 400) * 5;
+
+  const x = mouseX + wobbleX;
+  const y = mouseY + wobbleY;
+
+  document.body.style.setProperty('--x', x + 'px');
+  document.body.style.setProperty('--y', y + 'px');
+
+  checkOverlap(x, y);
+
+  requestAnimationFrame(animate);
+}
+
+function checkOverlap(x, y) {
+  const rect = text.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  const distance = Math.hypot(x - centerX, y - centerY);
+
+  if (distance < 150) {
+    text.classList.add("active");
+  } else {
+    text.classList.remove("active");
+  }
+}
+
+animate();
+</script>
+
+</body>
+</html>

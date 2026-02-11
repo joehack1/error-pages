@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>500 - Constellation Collapse</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  height:100vh;
+  background: radial-gradient(circle at center, #050510 0%, #000 75%);
+  overflow:hidden;
+  font-family: Arial, sans-serif;
+  cursor:none;
+}
+
+canvas {
+  position:absolute;
+  top:0;
+  left:0;
+}
+
+.title {
+  position:absolute;
+  top:40%;
+  width:100%;
+  text-align:center;
+  font-size:120px;
+  letter-spacing:20px;
+  color:white;
+  pointer-events:none;
+  opacity:0.9;
+}
+
+.message {
+  position:absolute;
+  bottom:40px;
+  width:100%;
+  text-align:center;
+  color:white;
+  opacity:0.6;
+  font-size:15px;
+  pointer-events:none;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<div class="title">500</div>
+<div class="message">You disrupted the constellation.</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let mouse = { x: canvas.width/2, y: canvas.height/2 };
+document.addEventListener("mousemove", e => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+const stars = [];
+const total = 160;
+const repelRadius = 140;
+const connectDistance = 110;
+
+for (let i = 0; i < total; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4,
+    trail: []
+  });
+}
+
+function draw() {
+  ctx.fillStyle = "rgba(0,0,10,0.4)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  stars.forEach(star => {
+
+    const dx = star.x - mouse.x;
+    const dy = star.y - mouse.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if (dist < repelRadius) {
+      const force = (repelRadius - dist) / repelRadius;
+      const angle = Math.atan2(dy, dx);
+      star.vx += Math.cos(angle) * force * 2;
+      star.vy += Math.sin(angle) * force * 2;
+    }
+
+    star.vx *= 0.98;
+    star.vy *= 0.98;
+
+    star.x += star.vx;
+    star.y += star.vy;
+
+    // Wrap edges
+    if (star.x < 0) star.x = canvas.width;
+    if (star.x > canvas.width) star.x = 0;
+    if (star.y < 0) star.y = canvas.height;
+    if (star.y > canvas.height) star.y = 0;
+
+    // Trail
+    star.trail.push({x:star.x, y:star.y});
+    if (star.trail.length > 8) star.trail.shift();
+
+    ctx.beginPath();
+    for (let i = 0; i < star.trail.length; i++) {
+      const t = star.trail[i];
+      ctx.fillStyle = `rgba(255,255,255,${i/star.trail.length})`;
+      ctx.fillRect(t.x, t.y, 2, 2);
+    }
+
+    // Star core
+    ctx.fillStyle = "white";
+    ctx.fillRect(star.x, star.y, 2, 2);
+  });
+
+  // Draw constellation lines
+  for (let a = 0; a < stars.length; a++) {
+    for (let b = a + 1; b < stars.length; b++) {
+      const dx = stars[a].x - stars[b].x;
+      const dy = stars[a].y - stars[b].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if (dist < connectDistance) {
+
+        // Break lines if near mouse
+        const mx = (stars[a].x + stars[b].x)/2 - mouse.x;
+        const my = (stars[a].y + stars[b].y)/2 - mouse.y;
+        const md = Math.sqrt(mx*mx + my*my);
+
+        if (md > repelRadius * 0.7) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(255,255,255,${1 - dist/connectDistance})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(stars[a].x, stars[a].y);
+          ctx.lineTo(stars[b].x, stars[b].y);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+
+</body>
+</html>
