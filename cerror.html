@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>500 - Server Error</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  height: 100vh;
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Cursor Glow */
+.cursor-glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255,0,0,0.4) 0%, rgba(0,0,0,0) 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: 0.05s;
+  mix-blend-mode: screen;
+}
+
+/* Center Content */
+.container {
+  text-align: center;
+  z-index: 2;
+}
+
+h1 {
+  font-size: 120px;
+  letter-spacing: 10px;
+  color: #ff1a1a;
+  animation: flicker 1.5s infinite alternate;
+}
+
+p {
+  font-size: 18px;
+  margin-top: 20px;
+  opacity: 0.7;
+}
+
+button {
+  margin-top: 30px;
+  padding: 12px 30px;
+  background: transparent;
+  border: 1px solid #ff1a1a;
+  color: #ff1a1a;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #ff1a1a;
+  color: #000;
+}
+
+/* Flicker Animation */
+@keyframes flicker {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; text-shadow: 0 0 10px #ff0000; }
+  100% { opacity: 0.8; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="cursor-glow"></div>
+
+<div class="container">
+  <h1>500</h1>
+  <p>The server tripped in the dark.</p>
+  <button onclick="location.reload()">Try Again</button>
+</div>
+
+<script>
+const glow = document.querySelector('.cursor-glow');
+
+document.addEventListener('mousemove', (e) => {
+  glow.style.left = e.pageX + 'px';
+  glow.style.top = e.pageY + 'px';
+});
+</script>
+
+</body>
+</html>
+
