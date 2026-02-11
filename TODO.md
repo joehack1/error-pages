@@ -1,0 +1,4 @@
+- [x] Create snake.html: Extract Snake game from 500game.html, use apple emoji for food, improve UI, remove glows
+- [x] Create shooter.html: Extract Shooter game, improve tank design, make enemies like fighter jets, remove glows
+- [x] Create pong.html: Extract Pong game, remove glows
+- [x] Test each separate game file for functionality

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooter Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        .game-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #0f0;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            opacity: 0.7;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 24px;
+            color: #0f0;
+        }
+
+        .game-canvas {
+            background: #000;
+            border: 2px solid #0f0;
+            display: block;
+            margin: 0 auto 20px;
+            cursor: pointer;
+        }
+
+        .controls {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: transparent;
+            color: #0f0;
+            border: 2px solid #0f0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #0f0;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-title">🎯 SHOOTER GAME</div>
+
+        <div class="score-board">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">HIGH SCORE</div>
+                <div class="score-value" id="highScore">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">LEVEL</div>
+                <div class="score-value" id="level">1</div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" class="game-canvas" width="300" height="300"></canvas>
+
+        <div class="controls">
+            CONTROLS: Mouse Move | Click: Shoot | SPACE: Pause | R: Restart
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="location.href='500game.html'">BACK TO ERROR PAGE</button>
+            <button class="btn" onclick="resetGame()">RESTART</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let player = { x: canvas.width / 2, y: canvas.height - 40, width: 40, height: 20 };
+        let bullets = [];
+        let enemies = [];
+        let score = 0;
+        let highScore = localStorage.getItem('shooterHighScore') || 0;
+        let level = 1;
+        let isPaused = false;
+        let gameLoop;
+
+        document.getElementById('highScore').textContent = highScore;
+
+        function resetGame() {
+            player.x = canvas.width / 2;
+            bullets = [];
+            enemies = [];
+            score = 0;
+            level = 1;
+            updateScore();
+        }
+
+        function spawnEnemy() {
+            if (enemies.length < 8) {
+                enemies.push({
+                    x: Math.random() * (canvas.width - 30),
+                    y: -30,
+                    width: 30,
+                    height: 20,
+                    speed: 1 + level * 0.2
+                });
+            }
+        }
+
+        function drawGame() {
+            if (isPaused) return;
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player (tank)
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            // Tank barrel
+            ctx.fillRect(player.x + player.width / 2 - 2, player.y - 10, 4, 10);
+
+            // Update and draw bullets
+            bullets = bullets.filter(bullet => {
+                bullet.y -= 5;
+                ctx.fillStyle = '#0ff';
+                ctx.fillRect(bullet.x, bullet.y, 4, 10);
+                return bullet.y > 0;
+            });
+
+            // Spawn and draw enemies (fighter jets)
+            if (Math.random() < 0.02) spawnEnemy();
+
+            enemies = enemies.filter(enemy => {
+                enemy.y += enemy.speed;
+
+                // Check bullet collision
+                let hit = false;
+                bullets = bullets.filter(bullet => {
+                    if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                        bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                        hit = true;
+                        score += 5;
+                        level = Math.floor(score / 50) + 1;
+                        updateScore();
+                        return false;
+                    }
+                    return true;
+                });
+
+                if (hit) return false;
+
+                // Draw fighter jet
+                ctx.fillStyle = '#f00';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                // Wings
+                ctx.fillRect(enemy.x - 5, enemy.y + 5, 5, 10);
+                ctx.fillRect(enemy.x + enemy.width, enemy.y + 5, 5, 10);
+
+                // Check player collision
+                if (enemy.y > canvas.height - 50 && enemy.x > player.x - 20 && enemy.x < player.x + player.width + 20) {
+                    resetGame();
+                    return false;
+                }
+
+                return enemy.y < canvas.height;
+            });
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('shooterHighScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+            }
+        }
+
+        // Controls
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                isPaused = !isPaused;
+            }
+            if (e.code === 'KeyR') {
+                resetGame();
+            }
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            player.x = mouseX - player.width / 2;
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
+        });
+
+        canvas.addEventListener('click', () => {
+            if (!isPaused) {
+                bullets.push({
+                    x: player.x + player.width / 2,
+                    y: player.y
+                });
+            }
+        });
+
+        // Start game
+        resetGame();
+        gameLoop = setInterval(drawGame, 16);
+    </script>
+</body>
+</html>

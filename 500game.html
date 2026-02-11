@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            padding: 10px;
+            max-width: 800px;
+        }
+
+        .glitch-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .error-code {
+            font-size: 80px;
+            font-weight: bold;
+            color: #0f0;
+            position: relative;
+            display: inline-block;
+        }
+
+        .error-message {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #0f0;
+        }
+
+        .error-description {
+            font-size: 14px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        .game-zone {
+            background: rgba(0, 255, 0, 0.05);
+            border: 2px solid #0f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .game-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #0f0;
+        }
+
+        .game-canvas {
+            background: #000;
+            border: 2px solid #0f0;
+            display: block;
+            margin: 0 auto 10px;
+            cursor: pointer;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            opacity: 0.7;
+            font-size: 10px;
+            margin-bottom: 3px;
+        }
+
+        .score-value {
+            font-size: 20px;
+            color: #0f0;
+        }
+
+        .controls {
+            margin-top: 10px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: transparent;
+            color: #0f0;
+            border: 2px solid #0f0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #0f0;
+            color: #000;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.05;
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: #0f0;
+            animation: blink 1s infinite;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .power-ups {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .power-up {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #0f0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .power-up:hover {
+            background: rgba(0, 255, 0, 0.3);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+        }
+
+        .power-up.active {
+            background: #0f0;
+            color: #000;
+        }
+
+        .easter-egg {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 10px;
+            opacity: 0.3;
+            font-style: italic;
+        }
+
+        .mini-game-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .game-tab {
+            padding: 8px 16px;
+            background: transparent;
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .game-tab.active {
+            background: #0f0;
+            color: #000;
+        }
+
+        .game-tab:hover {
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrixBg"></canvas>
+    
+    <div class="container">
+        <div class="glitch-container">
+            <div class="error-code">500<span class="terminal-cursor"></span></div>
+        </div>
+        
+        <div class="error-message">SYSTEM.ERROR: Server Malfunction</div>
+        <div class="error-description">
+            > The server encountered an unexpected condition...<br>
+            > While we fix this, why not play a game?<br>
+            > Click to start debugging the matrix!
+        </div>
+
+        <div class="game-zone">
+            <div class="mini-game-selector">
+                <a href="snake.html" class="game-tab">🐍 Snake</a>
+                <a href="shooter.html" class="game-tab">🎯 Shooter</a>
+                <a href="pong.html" class="game-tab">🏓 Pong</a>
+            </div>
+
+            <div class="game-title" id="gameTitle">DEBUG THE MATRIX - SNAKE GAME</div>
+            
+            <div class="score-board">
+                <div class="score-item">
+                    <div class="score-label">SCORE</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">HIGH SCORE</div>
+                    <div class="score-value" id="highScore">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">LEVEL</div>
+                    <div class="score-value" id="level">1</div>
+                </div>
+            </div>
+
+            <canvas id="gameCanvas" class="game-canvas" width="300" height="300"></canvas>
+
+
+
+            <div class="controls" id="controls">
+                CONTROLS: Arrow Keys or WASD | SPACE: Pause | R: Restart
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="location.reload()">RELOAD SYSTEM</button>
+            <a href="/" class="btn">RETURN HOME</a>
+        </div>
+
+        <div class="easter-egg">Konami Code Ready...</div>
+    </div>
+
+    <script>
+        // Matrix background effect
+        const matrixCanvas = document.getElementById('matrixBg');
+        const matrixCtx = matrixCanvas.getContext('2d');
+        matrixCanvas.width = window.innerWidth;
+        matrixCanvas.height = window.innerHeight;
+
+        const matrixChars = '01アイウエオカキクケコサシスセソタチツテト';
+        const fontSize = 14;
+        const columns = matrixCanvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            matrixCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            matrixCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            matrixCtx.fillStyle = '#0f0';
+            matrixCtx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                matrixCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 35);
+
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+
+        let currentGame = 'snake';
+        let gameLoop;
+        let score = 0;
+        let highScore = localStorage.getItem('highScore') || 0;
+        let level = 1;
+        let isPaused = false;
+        let powerUps = {
+            speed: false,
+            invincible: false,
+            slow: false
+        };
+
+        document.getElementById('highScore').textContent = highScore;
+
+        // Snake Game
+        let snake = {
+            x: 10,
+            y: 10,
+            dx: 0,
+            dy: 0,
+            cells: [],
+            maxCells: 4
+        };
+        let food = {
+            x: 15,
+            y: 15
+        };
+
+        function resetSnake() {
+            snake.x = 10;
+            snake.y = 10;
+            snake.cells = [];
+            snake.maxCells = 4;
+            snake.dx = 0;
+            snake.dy = 0;
+            score = 0;
+            level = 1;
+            updateScore();
+        }
+
+        function randomFood() {
+            food.x = Math.floor(Math.random() * tileCount);
+            food.y = Math.floor(Math.random() * tileCount);
+        }
+
+        function drawSnakeGame() {
+            if (isPaused) return;
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Move snake
+            snake.x += snake.dx;
+            snake.y += snake.dy;
+
+            // Wrap around
+            if (snake.x < 0) snake.x = tileCount - 1;
+            if (snake.x >= tileCount) snake.x = 0;
+            if (snake.y < 0) snake.y = tileCount - 1;
+            if (snake.y >= tileCount) snake.y = 0;
+
+            // Add new head
+            snake.cells.unshift({x: snake.x, y: snake.y});
+
+            // Remove tail
+            if (snake.cells.length > snake.maxCells) {
+                snake.cells.pop();
+            }
+
+            // Draw food
+            ctx.fillStyle = '#f00';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#f00';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+            ctx.shadowBlur = 0;
+
+            // Draw snake
+            ctx.fillStyle = '#0f0';
+            snake.cells.forEach((cell, index) => {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#0f0';
+                ctx.fillRect(cell.x * gridSize, cell.y * gridSize, gridSize - 2, gridSize - 2);
+                
+                // Check collision with food
+                if (cell.x === food.x && cell.y === food.y) {
+                    snake.maxCells++;
+                    score += 10;
+                    level = Math.floor(score / 50) + 1;
+                    updateScore();
+                    randomFood();
+                }
+
+                // Check collision with self
+                for (let i = index + 1; i < snake.cells.length; i++) {
+                    if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y && !powerUps.invincible) {
+                        resetSnake();
+                    }
+                }
+            });
+            ctx.shadowBlur = 0;
+        }
+
+        // Shooter Game
+        let player = { x: canvas.width / 2, y: canvas.height - 40, width: 30, height: 30 };
+        let bullets = [];
+        let enemies = [];
+        let shooterScore = 0;
+
+        function resetShooter() {
+            player.x = canvas.width / 2;
+            bullets = [];
+            enemies = [];
+            shooterScore = 0;
+            score = 0;
+            level = 1;
+            updateScore();
+        }
+
+        function spawnEnemy() {
+            if (enemies.length < 8) {
+                enemies.push({
+                    x: Math.random() * (canvas.width - 20),
+                    y: -20,
+                    width: 20,
+                    height: 20,
+                    speed: 1 + level * 0.2
+                });
+            }
+        }
+
+        function drawShooterGame() {
+            if (isPaused) return;
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw player
+            ctx.fillStyle = '#0f0';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#0f0';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Update and draw bullets
+            bullets = bullets.filter(bullet => {
+                bullet.y -= 5;
+                ctx.fillStyle = '#0ff';
+                ctx.shadowColor = '#0ff';
+                ctx.fillRect(bullet.x, bullet.y, 4, 10);
+                return bullet.y > 0;
+            });
+
+            // Spawn and draw enemies
+            if (Math.random() < 0.02) spawnEnemy();
+            
+            enemies = enemies.filter(enemy => {
+                enemy.y += enemy.speed;
+                
+                // Check bullet collision
+                let hit = false;
+                bullets = bullets.filter(bullet => {
+                    if (bullet.x > enemy.x && bullet.x < enemy.x + enemy.width &&
+                        bullet.y > enemy.y && bullet.y < enemy.y + enemy.height) {
+                        hit = true;
+                        score += 5;
+                        level = Math.floor(score / 50) + 1;
+                        updateScore();
+                        return false;
+                    }
+                    return true;
+                });
+
+                if (hit) return false;
+
+                ctx.fillStyle = '#f00';
+                ctx.shadowColor = '#f00';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+
+                // Check player collision
+                if (enemy.y > canvas.height - 50 && enemy.x > player.x - 20 && enemy.x < player.x + 50 && !powerUps.invincible) {
+                    resetShooter();
+                    return false;
+                }
+
+                return enemy.y < canvas.height;
+            });
+            ctx.shadowBlur = 0;
+        }
+
+        // Pong Game
+        let paddle = { x: canvas.width / 2 - 40, y: canvas.height - 20, width: 80, height: 10 };
+        let ball = { x: canvas.width / 2, y: canvas.height / 2, dx: 3, dy: -3, radius: 8 };
+        let bricks = [];
+
+        function createBricks() {
+            bricks = [];
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 8; col++) {
+                    bricks.push({
+                        x: col * 50 + 5,
+                        y: row * 20 + 30,
+                        width: 45,
+                        height: 15,
+                        alive: true
+                    });
+                }
+            }
+        }
+
+        function resetPong() {
+            paddle.x = canvas.width / 2 - 40;
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = 3;
+            ball.dy = -3;
+            createBricks();
+            score = 0;
+            level = 1;
+            updateScore();
+        }
+
+        createBricks();
+
+        function drawPongGame() {
+            if (isPaused) return;
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw paddle
+            ctx.fillStyle = '#0f0';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#0f0';
+            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+
+            // Draw and move ball
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#0ff';
+            ctx.shadowColor = '#0ff';
+            ctx.fill();
+
+            // Ball collision with walls
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                ball.dx *= -1;
+            }
+            if (ball.y - ball.radius < 0) {
+                ball.dy *= -1;
+            }
+
+            // Ball collision with paddle
+            if (ball.y + ball.radius > paddle.y && ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+                ball.dy *= -1;
+                ball.y = paddle.y - ball.radius;
+            }
+
+            // Ball out of bounds
+            if (ball.y - ball.radius > canvas.height) {
+                if (!powerUps.invincible) {
+                    resetPong();
+                } else {
+                    ball.y = canvas.height / 2;
+                    ball.dy *= -1;
+                }
+            }
+
+            // Draw bricks
+            bricks.forEach(brick => {
+                if (brick.alive) {
+                    ctx.fillStyle = '#f00';
+                    ctx.shadowColor = '#f00';
+                    ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+
+                    // Ball collision with brick
+                    if (ball.x > brick.x && ball.x < brick.x + brick.width &&
+                        ball.y > brick.y && ball.y < brick.y + brick.height) {
+                        ball.dy *= -1;
+                        brick.alive = false;
+                        score += 10;
+                        level = Math.floor(score / 100) + 1;
+                        updateScore();
+                    }
+                }
+            });
+
+            // Check if all bricks destroyed
+            if (bricks.every(brick => !brick.alive)) {
+                createBricks();
+                ball.dx *= 1.1;
+                ball.dy *= 1.1;
+            }
+
+            ctx.shadowBlur = 0;
+        }
+
+        // Game switching
+        function switchGame(game) {
+            currentGame = game;
+            clearInterval(gameLoop);
+            isPaused = false;
+            
+            document.querySelectorAll('.game-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (game === 'snake') {
+                document.getElementById('gameTitle').textContent = 'DEBUG THE MATRIX - SNAKE GAME';
+                document.getElementById('controls').textContent = 'CONTROLS: Arrow Keys or WASD | SPACE: Pause | R: Restart';
+                resetSnake();
+                gameLoop = setInterval(drawSnakeGame, powerUps.speed ? 50 : (powerUps.slow ? 150 : 100));
+            } else if (game === 'shooter') {
+                document.getElementById('gameTitle').textContent = 'DESTROY THE BUGS - SHOOTER';
+                document.getElementById('controls').textContent = 'CONTROLS: Mouse Move | Click: Shoot | SPACE: Pause | R: Restart';
+                resetShooter();
+                gameLoop = setInterval(drawShooterGame, powerUps.slow ? 30 : 16);
+            } else if (game === 'pong') {
+                document.getElementById('gameTitle').textContent = 'BREAKOUT PROTOCOL - PONG';
+                document.getElementById('controls').textContent = 'CONTROLS: Mouse Move | SPACE: Pause | R: Restart';
+                resetPong();
+                gameLoop = setInterval(drawPongGame, 16);
+            }
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+            }
+        }
+
+        function togglePowerUp(type) {
+            const powerUpEl = event.target;
+            powerUps[type] = !powerUps[type];
+            powerUpEl.classList.toggle('active');
+
+            if (type === 'speed' && currentGame === 'snake') {
+                clearInterval(gameLoop);
+                gameLoop = setInterval(drawSnakeGame, powerUps.speed ? 50 : 100);
+            }
+        }
+
+        // Controls
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                isPaused = !isPaused;
+            }
+            if (e.code === 'KeyR') {
+                if (currentGame === 'snake') resetSnake();
+                if (currentGame === 'shooter') resetShooter();
+                if (currentGame === 'pong') resetPong();
+            }
+
+            if (currentGame === 'snake') {
+                if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && snake.dx === 0) {
+                    snake.dx = -1;
+                    snake.dy = 0;
+                }
+                if ((e.code === 'ArrowUp' || e.code === 'KeyW') && snake.dy === 0) {
+                    snake.dx = 0;
+                    snake.dy = -1;
+                }
+                if ((e.code === 'ArrowRight' || e.code === 'KeyD') && snake.dx === 0) {
+                    snake.dx = 1;
+                    snake.dy = 0;
+                }
+                if ((e.code === 'ArrowDown' || e.code === 'KeyS') && snake.dy === 0) {
+                    snake.dx = 0;
+                    snake.dy = 1;
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            
+            if (currentGame === 'shooter') {
+                player.x = mouseX - player.width / 2;
+            } else if (currentGame === 'pong') {
+                paddle.x = mouseX - paddle.width / 2;
+                if (paddle.x < 0) paddle.x = 0;
+                if (paddle.x > canvas.width - paddle.width) paddle.x = canvas.width - paddle.width;
+            }
+        });
+
+        canvas.addEventListener('click', () => {
+            if (currentGame === 'shooter' && !isPaused) {
+                bullets.push({
+                    x: player.x + player.width / 2,
+                    y: player.y
+                });
+            }
+        });
+
+        // Konami Code Easter Egg
+        let konamiCode = [];
+        const konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'KeyB', 'KeyA'];
+        
+        document.addEventListener('keydown', e => {
+            konamiCode.push(e.code);
+            konamiCode = konamiCode.slice(-10);
+            
+            if (konamiCode.join(',') === konamiSequence.join(',')) {
+                powerUps.invincible = true;
+                score += 500;
+                updateScore();
+                document.querySelector('.easter-egg').textContent = '🎮 INVINCIBILITY ACTIVATED! 🎮';
+                setTimeout(() => {
+                    document.querySelector('.easter-egg').textContent = 'Konami Code Ready...';
+                }, 3000);
+            }
+        });
+
+        // Start with snake game
+        switchGame('snake');
+    </script>
+</body>
+</html>
