@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D particle clock · many dots · seconds</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: black; font-family: 'Courier New', monospace; }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #6af;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 8px #2af;
+            background: rgba(0,0,0,0.5);
+            padding: 6px 14px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            border: 1px solid #3af3;
+        }
+        .note {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #9cf;
+            font-size: 12px;
+            opacity: 0.7;
+            z-index: 10;
+            background: rgba(0,10,20,0.6);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #3af6;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">⚡ 3D CLOCK · <span id="time-indicator">00:00:00</span> · DRAG TO ROTATE · MANY POINTS</div>
+    <div class="note">PARTICLE DEPTH · 12K DOTS</div>
+
+    <!-- Import Three.js and OrbitControls from CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- setup scene, camera, renderer ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050510);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 18);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        // --- controls with auto-rotate to show 3d effect ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.rotateSpeed = 0.8;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.2;
+        controls.enableZoom = true;
+        controls.enablePan = false;
+        controls.maxPolarAngle = Math.PI / 2; // keep above horizon
+        controls.target.set(0, 0.5, 0);
+
+        // --- lighting (subtle, points will be self-illuminated but we add ambient for any other elements) ---
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight.position.set(1, 2, 1);
+        scene.add(dirLight);
+
+        // --- central faint disc to ground the 3D ---
+        const discGeometry = new THREE.CircleGeometry(5.2, 64);
+        const discMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a2f4a,
+            emissive: 0x0a1a30,
+            transparent: true,
+            opacity: 0.25,
+            side: THREE.DoubleSide
+        });
+        const disc = new THREE.Mesh(discGeometry, discMaterial);
+        disc.rotation.x = -Math.PI / 2;
+        disc.position.y = -1.2;
+        scene.add(disc);
+
+        // --- tiny stars in background for depth ---
+        const bgStarGeo = new THREE.BufferGeometry();
+        const bgStarCount = 800;
+        const bgPositions = new Float32Array(bgStarCount * 3);
+        for (let i = 0; i < bgStarCount; i++) {
+            const r = 20 + Math.random() * 30;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            bgPositions[i*3] = r * Math.sin(phi) * Math.cos(theta);
+            bgPositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+            bgPositions[i*3+2] = r * Math.cos(phi);
+        }
+        bgStarGeo.setAttribute('position', new THREE.BufferAttribute(bgPositions, 3));
+        const bgStarMat = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.15, transparent: true, opacity: 0.4 });
+        const bgStars = new THREE.Points(bgStarGeo, bgStarMat);
+        scene.add(bgStars);
+
+        // --- main clock particles ---
+        let particleSystem;
+        const maxPoints = 30000; // high limit, but we'll sample ~12k
+        const positions = new Float32Array(maxPoints * 3);
+        const colors = new Float32Array(maxPoints * 3);
+        
+        // helper canvas to sample text pixels
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // function to generate particle cloud from current time string with depth
+        function generateParticlesFromTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timeStr = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('time-indicator').innerText = timeStr;
+
+            // set canvas size to decent resolution (higher = more dots)
+            canvas.width = 800;
+            canvas.height = 300;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // draw big bold text
+            ctx.font = 'bold 220px "Courier New", monospace';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(timeStr, canvas.width/2, canvas.height/2);
+
+            // scan pixels with step = 2 (MANY DOTS) step 2 gives ~ (800/2)*(300/2)* (density) = up to 30k but we limit
+            const step = 2; 
+            const positionsTemp = [];
+            
+            for (let y = 0; y < canvas.height; y += step) {
+                for (let x = 0; x < canvas.width; x += step) {
+                    const pixel = ctx.getImageData(x, y, 1, 1).data;
+                    if (pixel[3] > 128) {
+                        // map to 3D space: centered, with y-up, and add Z based on horizontal position for depth
+                        // x: -5 .. 5, y: -2 .. 2 (approx)
+                        const scaleX = 9.5 / canvas.width;
+                        const scaleY = 4.5 / canvas.height;
+                        const posX = (x - canvas.width/2) * scaleX;
+                        const posY = -(y - canvas.height/2) * scaleY + 0.5; // raise a bit
+                        
+                        // Z depth: create a layered feel based on original X + some random to fill volume
+                        // also adds variation to make it 3D
+                        const depthOffset = (x / canvas.width) * 2.5 - 1.2; // -1.2 .. 1.3
+                        const randomZ = (Math.random() - 0.5) * 1.8;
+                        const posZ = depthOffset * 1.6 + randomZ * 0.9; 
+
+                        positionsTemp.push(posX, posY, posZ);
+                    }
+                }
+            }
+
+            // limit to maxPoints (take evenly distributed if necessary, but we can just use up to maxPoints)
+            const count = Math.min(positionsTemp.length / 3, maxPoints);
+            const actualCount = Math.floor(count);
+            
+            // we also want to randomize selection if too many, but we'll just slice for simplicity (first N)
+            // but better: pick random indices to keep variety if overflow
+            let indices = Array.from({ length: positionsTemp.length/3 }, (_, i) => i);
+            if (indices.length > actualCount) {
+                // shuffle and take first actualCount
+                for (let i = indices.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [indices[i], indices[j]] = [indices[j], indices[i]];
+                }
+                indices = indices.slice(0, actualCount);
+            } else {
+                indices = indices.slice(); // all
+            }
+
+            // fill positions array
+            const usedPositions = [];
+            indices.forEach((idx, i) => {
+                const ix = idx * 3;
+                positions[i*3] = positionsTemp[ix];
+                positions[i*3+1] = positionsTemp[ix+1];
+                positions[i*3+2] = positionsTemp[ix+2];
+                usedPositions.push(positions[i*3], positions[i*3+1], positions[i*3+2]);
+            });
+
+            // create color based on depth (Z) for nice gradient
+            for (let i = 0; i < actualCount; i++) {
+                const z = positions[i*3+2];
+                // map z from -2..2 to hue (blue to pink)
+                const r = 0.6 + 0.5 * Math.sin(z * 1.5 + 2);
+                const g = 0.5 + 0.5 * Math.sin(z * 1.2 + 4);
+                const b = 1.0;
+                colors[i*3] = r;
+                colors[i*3+1] = g;
+                colors[i*3+2] = b;
+            }
+
+            // if particle system exists, update geometry, else create new
+            if (particleSystem) {
+                scene.remove(particleSystem);
+                particleSystem.geometry.dispose();
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions.slice(0, actualCount*3), 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors.slice(0, actualCount*3), 3));
+            
+            const material = new THREE.PointsMaterial({ 
+                size: 0.12,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true,
+                opacity: 0.95,
+                sizeAttenuation: true
+            });
+            
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+
+            console.log(`generated ${actualCount} particles for ${timeStr}`);
+        }
+
+        // initial generation
+        generateParticlesFromTime();
+
+        // update every second
+        setInterval(generateParticlesFromTime, 200); // check quickly, but only regenerates if time changes
+
+        // also add some random floating particles around for extra "many dots" feel? not needed, but we can add subtle secondary cloud
+        const extraParticlesGeo = new THREE.BufferGeometry();
+        const extraCount = 3000;
+        const extraPos = new Float32Array(extraCount * 3);
+        for (let i = 0; i < extraCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const rad = 6 + Math.random() * 4;
+            const height = (Math.random() - 0.5) * 5;
+            extraPos[i*3] = Math.cos(angle) * rad;
+            extraPos[i*3+1] = height;
+            extraPos[i*3+2] = Math.sin(angle) * rad;
+        }
+        extraParticlesGeo.setAttribute('position', new THREE.BufferAttribute(extraPos, 3));
+        const extraMat = new THREE.PointsMaterial({ color: 0x4466aa, size: 0.08, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false });
+        const extraParticles = new THREE.Points(extraParticlesGeo, extraMat);
+        scene.add(extraParticles);
+
+        // --- animation loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // auto-rotate via controls
+            controls.update();
+
+            // slight pulsating of background stars? optional
+            bgStars.rotation.y += 0.0001;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- resize handler ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // disable auto-rotate on user drag? keep it as is; orbitcontrols handles it.
+        // but we want autoRotate to continue after drag? default is true, and it restarts after idle.
+        // adjust controls.autoRotate behavior: it restarts after idle because we set autoRotate true.
+    </script>
+</body>
+</html>
